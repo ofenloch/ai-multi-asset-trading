@@ -84,10 +84,19 @@ y_test = y_test[:usable_length]
 
 # reshape
 probs = probs.reshape(-1, n_assets)
+print("Avg probability:", probs.mean())
+print("Max probability:", probs.max())
+print("Min probability:", probs.min())
 returns = y_test.reshape(-1, n_assets)  # 👉 echte Returns!
 
 # 👉 Trading-Entscheidung aus Wahrscheinlichkeiten
-signals = (probs > 0.55).astype(int)
+# signals = (probs > 0.55).astype(int)
+# | Threshold | Effekt             |
+# | --------- | ------------------ |
+# | 0.55      | sehr wenige Trades |
+# | 0.52      | moderate Trades    |
+# | 0.50      | sehr viele Trades  |
+signals = (probs > 0.52).astype(int)
 
 # Backtest mit echten Returns
 history = backtest(signals, returns, TOP_K, THRESHOLD, TRANSACTION_COST)
