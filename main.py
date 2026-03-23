@@ -7,53 +7,60 @@ from utils.data_loader import load_data
 from utils.features import add_features
 from utils.sequences import create_sequences
 from models.lstm_model import MultiAssetLSTM
-from backtest.portfolio import backtest
 
-# Daten laden
+# -----------------------------
+# 1. Daten laden
+# -----------------------------
 data = load_data(TICKERS, START_DATE, END_DATE)
 
-all_X, all_y = [], []
+all_data = {}
 
-for i, t in enumerate(TICKERS):
+# -----------------------------
+# 2. Features + Sequenzen pro Asset
+# -----------------------------
+for t in TICKERS:
     df = add_features(data[t])
 
     feature_cols = ['return','ma_5','ma_20','volatility','Volume']
     features = df[feature_cols].values
     target = df['target'].values
 
-    # Skalierung
     scaler = StandardScaler()
     features = scaler.fit_transform(features)
 
-    # Asset-ID hinzufügen
-    asset_id = np.full((len(features), 1), i)
-    features = np.hstack([features, asset_id])
-
-    # Sequenzen erstellen
     X, y = create_sequences(features, target, SEQ_LEN)
 
-    all_X.append(X)
-    all_y.append(y)
+    all_data[t] = (X, y)
 
-X = np.concatenate(all_X)
-y = np.concatenate(all_y)
+# -----------------------------
+# 3. Trainingsdaten kombinieren
+# -----------------------------
+X_train_all = []
+y_train_all = []
 
-# Train/Test Split
-split = int(len(X) * TRAIN_SPLIT)
-X_train, X_test = X[:split], X[split:]
-y_train, y_test = y[:split], y[split:]
+for t in TICKERS:
+    X, y = all_data[t]
+    split = int(len(X) * TRAIN_SPLIT)
 
-# Modell
-model = MultiAssetLSTM(input_size=X.shape[2])
+    X_train_all.append(X[:split])
+    y_train_all.append(y[:split])
+
+X_train = np.concatenate(X_train_all)
+y_train = np.concatenate(y_train_all)
+
+# -----------------------------
+# 4. Modell
+# -----------------------------
+model = MultiAssetLSTM(input_size=X_train.shape[2])
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-# 🎯 Klassifikation!
 criterion = torch.nn.BCEWithLogitsLoss()
 
 X_train_t = torch.tensor(X_train, dtype=torch.float32)
 y_train_t = torch.tensor(y_train, dtype=torch.float32)
 
-# Training
+# -----------------------------
+# 5. Training
+# -----------------------------
 for epoch in range(10):
     optimizer.zero_grad()
 
@@ -65,40 +72,65 @@ for epoch in range(10):
 
     print(f"Epoch {epoch}: {loss.item()}")
 
-# Prediction
+# -----------------------------
+# 6. Predictions pro Asset
+# -----------------------------
 model.eval()
-X_test_t = torch.tensor(X_test, dtype=torch.float32)
 
-logits = model(X_test_t).detach().numpy().flatten()
+results = {}
 
-# Wahrscheinlichkeiten (Up/Down)
-probs = 1 / (1 + np.exp(-logits))
+for t in TICKERS:
+    X, y = all_data[t]
+    split = int(len(X) * TRAIN_SPLIT)
 
-n_assets = len(TICKERS)
+    X_test = X[split:]
+    y_test = y[split:]
 
-# Länge anpassen
-usable_length = (len(probs) // n_assets) * n_assets
+    X_test_t = torch.tensor(X_test, dtype=torch.float32)
 
-probs = probs[:usable_length]
-y_test = y_test[:usable_length]
+    logits = model(X_test_t).detach().numpy().flatten()
+    probs = 1 / (1 + np.exp(-logits))
 
-# reshape
-probs = probs.reshape(-1, n_assets)
-print("Avg probability:", probs.mean())
-print("Max probability:", probs.max())
-print("Min probability:", probs.min())
-returns = y_test.reshape(-1, n_assets)  # 👉 echte Returns!
+    results[t] = (probs, y_test)
 
-# 👉 Trading-Entscheidung aus Wahrscheinlichkeiten
-# signals = (probs > 0.55).astype(int)
-# | Threshold | Effekt             |
-# | --------- | ------------------ |
-# | 0.55      | sehr wenige Trades |
-# | 0.52      | moderate Trades    |
-# | 0.50      | sehr viele Trades  |
-signals = (probs > 0.52).astype(int)
+# -----------------------------
+# 7. Portfolio Backtest
+# -----------------------------
+min_len = min(len(results[t][0]) for t in TICKERS)
 
-# Backtest mit echten Returns
-history = backtest(signals, returns, TOP_K, THRESHOLD, TRANSACTION_COST)
+capital = 1.0
+history = []
 
-print("Final capital:", history[-1])
+for i in range(min_len):
+    signals = []
+    returns = []
+
+    for t in TICKERS:
+        probs, rets = results[t]
+
+        signals.append(probs[i])
+        returns.append(rets[i])
+
+    signals = np.array(signals)
+    returns = np.array(returns)
+
+    # 👉 Top-K Auswahl (beste Signale)
+    # Problem 1: Du tradest „blind Top-K“
+    #   👉 Problem:
+    #   Modell ist nicht immer sicher
+    #   du handelst trotzdem
+    #   ➡️ Viele schlechte Trades
+    selected = np.argsort(signals)[-TOP_K:]
+
+    weights = np.zeros(len(TICKERS))
+    weights[selected] = 1 / TOP_K
+
+    portfolio_return = np.sum(weights * returns) - TRANSACTION_COST
+
+    capital *= (1 + portfolio_return)
+    history.append(capital)
+
+# -----------------------------
+# 8. Ergebnis
+# -----------------------------
+print("Final capital:", capital)
