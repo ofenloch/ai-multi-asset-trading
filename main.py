@@ -122,6 +122,21 @@ for i in range(min_len):
     #   ➡️ Viele schlechte Trades
     selected = np.argsort(signals)[-TOP_K:]
 
+    # Problem 2: Kein Confidence-Filter
+    # 👉 Du nutzt:
+    #   signals = probs
+    # Aber:
+    #      0.51 = sehr unsicher
+    #      0.60 = viel besser
+    # 👉 Du behandelst beides gleich → Fehler
+
+    # Problem 3: Keine Edge-Selektion
+    # 👉 Ein gutes Quant-System macht:
+    # ❌ nicht:
+    # „immer handeln“
+    # ✅ sondern:
+    # „nur handeln, wenn ich Vorteil habe“
+
     weights = np.zeros(len(TICKERS))
     weights[selected] = 1 / TOP_K
 
