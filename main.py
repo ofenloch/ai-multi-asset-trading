@@ -71,23 +71,25 @@ X_test_t = torch.tensor(X_test, dtype=torch.float32)
 
 logits = model(X_test_t).detach().numpy().flatten()
 
-# 👉 Wahrscheinlichkeiten
+# Wahrscheinlichkeiten (Up/Down)
 probs = 1 / (1 + np.exp(-logits))
 
-# Für Backtest zurück in Shape bringen
 n_assets = len(TICKERS)
 
-# Länge anpassen (abschneiden auf Vielfaches von n_assets)
+# Länge anpassen
 usable_length = (len(probs) // n_assets) * n_assets
 
 probs = probs[:usable_length]
 y_test = y_test[:usable_length]
 
-# jetzt reshape sicher
+# reshape
 probs = probs.reshape(-1, n_assets)
-y_test = y_test.reshape(-1, n_assets)
+returns = y_test.reshape(-1, n_assets)  # 👉 echte Returns!
 
-# Backtest (jetzt mit Wahrscheinlichkeiten)
-history = backtest(probs, y_test, TOP_K, THRESHOLD, TRANSACTION_COST)
+# 👉 Trading-Entscheidung aus Wahrscheinlichkeiten
+signals = (probs > 0.55).astype(int)
+
+# Backtest mit echten Returns
+history = backtest(signals, returns, TOP_K, THRESHOLD, TRANSACTION_COST)
 
 print("Final capital:", history[-1])

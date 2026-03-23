@@ -21,7 +21,9 @@ def backtest(preds, targets, top_k, threshold, cost):
         weights[selected] = 1 / top_k
 
         # Targets: 1 = Gewinn, 0 = Verlust
-        returns = np.where(targets[t] == 1, 0.01, -0.01)
+        # returns = np.where(targets[t] == 1, 0.01, -0.01)
+        # echte Returns verwenden
+        returns = targets[t]
 
         portfolio_return = np.sum(weights * returns)
         portfolio_return -= cost
