@@ -114,13 +114,17 @@ for i in range(min_len):
     signals = np.array(signals)
     returns = np.array(returns)
 
-    # 👉 Top-K Auswahl (beste Signale)
-    # Problem 1: Du tradest „blind Top-K“
-    #   👉 Problem:
-    #   Modell ist nicht immer sicher
-    #   du handelst trotzdem
-    #   ➡️ Viele schlechte Trades
-    selected = np.argsort(signals)[-TOP_K:]
+    # nur starke Signale hndeln
+    strong = signals > 0.55
+
+    if strong.sum() == 0:
+        history.append(capital)
+        continue
+
+    filtered_signals = signals.copy()
+    filtered_signals[~strong] = 0
+
+    selected = np.argsort(filtered_signals)[-TOP_K:]
 
     # Problem 2: Kein Confidence-Filter
     # 👉 Du nutzt:
@@ -148,4 +152,6 @@ for i in range(min_len):
 # -----------------------------
 # 8. Ergebnis
 # -----------------------------
+print("Avg signals:", signals.mean())
+print("Max signals:", signals.max())
 print("Final capital:", capital)
