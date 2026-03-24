@@ -1,5 +1,5 @@
 def add_features(df):
-    # Basis
+    # Basis ist tägliche prozentuale Veränderung des Close-Wertes
     df['return'] = df['Close'].pct_change()
 
     # Technische Features
