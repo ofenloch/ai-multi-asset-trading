@@ -1,0 +1,18 @@
+Loading data for AAPL from 2015-01-01 to 2024-01-01 ...
+Loading data for MSFT from 2015-01-01 to 2024-01-01 ...
+Loading data for GOOGL from 2015-01-01 to 2024-01-01 ...
+Loading data for AMZN from 2015-01-01 to 2024-01-01 ...
+Loading data for SPY from 2015-01-01 to 2024-01-01 ...
+Epoch 0: 0.7128075957298279
+Epoch 1: 0.7036648392677307
+Epoch 2: 0.694629430770874
+Epoch 3: 0.6856603622436523
+Epoch 4: 0.676720142364502
+Epoch 5: 0.6677634119987488
+Epoch 6: 0.6587385535240173
+Epoch 7: 0.6495910286903381
+Epoch 8: 0.6402615308761597
+Epoch 9: 0.6306824684143066
+Avg signals: 0.4903857
+Max signals: 0.49361047
+Final capital: 1.0
