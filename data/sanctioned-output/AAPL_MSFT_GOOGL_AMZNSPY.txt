@@ -1,3 +1,15 @@
+Tickers:              ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'SPY']
+Start date:           2015-01-01
+End date:             2024-01-01
+Sequence length:      30
+Train split:          0.8
+Top K:                2
+Transaction cost:     0.001
+torch version:        2.10.0+cu128
+sklearn version:      sklearn
+numpy version:        2.4.3
+yfinance version:     1.2.0
+Random seed:          42
 Loading data for AAPL from 2015-01-01 to 2024-01-01 ...
 Loading data for MSFT from 2015-01-01 to 2024-01-01 ...
 Loading data for GOOGL from 2015-01-01 to 2024-01-01 ...

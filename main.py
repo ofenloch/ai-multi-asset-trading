@@ -9,6 +9,7 @@ import torch
 torch.manual_seed(random_seed)
 torch.use_deterministic_algorithms(True)
 
+import yfinance as yf
 
 from sklearn.preprocessing import StandardScaler
 
@@ -17,6 +18,23 @@ from utils.data_loader import load_data
 from utils.features import add_features
 from utils.sequences import create_sequences
 from models.lstm_model import MultiAssetLSTM
+
+# ------------------------------
+# 0. Imports & Config
+# ------------------------------
+print("Tickers:             ", TICKERS)
+print("Start date:          ", START_DATE)
+print("End date:            ", END_DATE)
+print("Sequence length:     ", SEQ_LEN)
+print("Train split:         ", TRAIN_SPLIT)
+print("Top K:               ", TOP_K)
+print("Transaction cost:    ", TRANSACTION_COST)
+print("torch version:       ", torch.__version__)
+print("sklearn version:     ", StandardScaler.__module__.split('.')[0])
+print("numpy version:       ", np.__version__)
+print("yfinance version:    ", yf.__version__)
+print("Random seed:         ", random_seed)
+
 
 # -----------------------------
 # 1. Daten laden
