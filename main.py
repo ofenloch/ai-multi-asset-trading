@@ -1,5 +1,15 @@
+
+# For development, testing and debugging we disable all randomness:
+random_seed = 42
+import random
+random.seed(random_seed)
 import numpy as np
+np.random.seed(random_seed)
 import torch
+torch.manual_seed(random_seed)
+torch.use_deterministic_algorithms(True)
+
+
 from sklearn.preprocessing import StandardScaler
 
 from config import *
